@@ -1,0 +1,390 @@
+# `ESPECIFICACION.md` — Fuente de verdad del proyecto
+
+> **Proyecto:** Control de Consumos de Agua y Electricidad en Establecimientos Educacionales
+> **Versión:** 0.1.0 (base inicial)
+> **Naturaleza:** Aplicación 100% local, sin dependencia de Internet ni servicios en la nube.
+> **Estado:** Documento vivo. Toda decisión técnica debe reflejarse aquí antes de programarse.
+
+---
+
+## 1. Propósito
+
+Construir una aplicación de escritorio web, **100% local**, que permita a una institución educativa:
+
+- Registrar boletas de agua y electricidad de múltiples establecimientos.
+- Validar automáticamente lecturas, fechas y montos.
+- Calcular métricas y detectar consumos atípicos.
+- Generar informes exportables (Excel, CSV, PDF).
+- Mantener trazabilidad completa de correcciones y alertas.
+
+**No es** un simple registro de boletas: es un sistema de control, validación y análisis.
+
+---
+
+## 2. Principios rectores
+
+1. **100% local.** Sin CDN, sin cuentas, sin servicios externos. Todo funciona sin Internet.
+2. **Integridad del dato primero.** Las lecturas y su trazabilidad son más importantes que las métricas.
+3. **Modelo medidor-céntrico.** El consumo se asocia al medidor, no al establecimiento.
+4. **Validaciones no bloqueantes.** Se advierte, no se impide registrar excepciones justificadas.
+5. **Trazabilidad total.** Todo cambio queda registrado. Las alertas conservan historial.
+6. **Modularidad.** Interfaz, lógica de negocio, validaciones y datos separados.
+
+---
+
+## 3. Stack tecnológico (obligatorio)
+
+| Capa | Tecnología | Restricción |
+|---|---|---|
+| Servidor | Node.js + Express | Local, puerto 3000 por defecto |
+| Base de datos | SQLite | Archivo local en `/data` |
+| Frontend | HTML + CSS + JS modular | Sin frameworks pesados |
+| Gráficos | Chart.js | Instalado localmente, no CDN |
+| Excel | SheetJS | Local |
+| PDF | PDFKit | Local |
+| Empaquetado | npm | Dependencias fijadas en `package.json` |
+
+---
+
+## 4. Modelo de datos (canónico)
+
+### Relaciones
+
+```
+ESTABLECIMIENTO (1) ──< SERVICIO (N) ──< REGISTRO (N)
+                                          │
+                                          ├──< DETALLE_BOLETA (1:1)
+                                          └──< VALIDACION (N)
+
+SERVICIO (1) ──< PARAMETRO (N)
+```
+
+### Tablas
+
+#### `establecimientos`
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | INTEGER PK | Autoincremental |
+| codigo | TEXT UNIQUE | Identificador legible |
+| nombre | TEXT NOT NULL | |
+| tipo | TEXT | escuela, liceo, jardín, etc. |
+| direccion | TEXT | |
+| matricula | INTEGER | Opcional, para normalización |
+| superficie_m2 | REAL | Opcional |
+| activo | INTEGER | 1/0 |
+
+#### `servicios`
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | INTEGER PK | |
+| establecimiento_id | INTEGER FK | → establecimientos.id |
+| tipo | TEXT | 'agua' \| 'electricidad' |
+| identificador | TEXT | Ej: "Agua potable – Medidor 02" |
+| numero_medidor | TEXT | |
+| unidad | TEXT | 'm³' \| 'kWh' |
+| fecha_alta | TEXT | ISO 8601 |
+| fecha_baja | TEXT | NULL si activo |
+| activo | INTEGER | 1/0 |
+
+#### `registros`
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | INTEGER PK | |
+| servicio_id | INTEGER FK | → servicios.id |
+| fecha_inicio | TEXT | ISO 8601 |
+| fecha_fin | TEXT | ISO 8601 |
+| lectura_anterior | REAL | |
+| lectura_actual | REAL | |
+| consumo_calculado | REAL | lectura_actual − lectura_anterior |
+| consumo_facturado | REAL | Según boleta |
+| tipo_lectura | TEXT | 'real' \| 'estimada' \| 'corregida' |
+| folio | TEXT | Número de boleta |
+| monto_total | REAL | |
+| observaciones | TEXT | |
+| documento_path | TEXT | Ruta local a foto/PDF |
+| creado_en | TEXT | Timestamp |
+| actualizado_en | TEXT | Timestamp |
+
+#### `detalle_boleta`
+| Campo | Tipo |
+|---|---|
+| registro_id | INTEGER PK FK |
+| cargo_fijo | REAL |
+| consumo_facturado_monto | REAL |
+| otros_cargos | REAL |
+| impuestos | REAL |
+| total | REAL |
+
+#### `validaciones`
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | INTEGER PK | |
+| registro_id | INTEGER FK | |
+| tipo | TEXT | 'fecha' \| 'lectura' \| 'consumo' \| ... |
+| severidad | TEXT | 'error' \| 'advertencia' \| 'info' |
+| descripcion | TEXT | |
+| estado | TEXT | 'pendiente' \| 'revisada' \| 'justificada' |
+| creada_en | TEXT | |
+| resuelta_en | TEXT | NULL |
+
+#### `parametros`
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | INTEGER PK | |
+| servicio_id | INTEGER FK | |
+| consumo_minimo | REAL | |
+| consumo_maximo | REAL | |
+| metodo | TEXT | 'fijo' \| 'historico' \| 'manual' |
+| vigencia_desde | TEXT | |
+| vigencia_hasta | TEXT | NULL |
+
+#### `historial_cambios`
+| Campo | Tipo |
+|---|---|
+| id | INTEGER PK |
+| entidad | TEXT |
+| entidad_id | INTEGER |
+| campo | TEXT |
+| valor_anterior | TEXT |
+| valor_nuevo | TEXT |
+| fecha | TEXT |
+
+#### `configuracion`
+| Campo | Tipo |
+|---|---|
+| clave | TEXT PK |
+| valor | TEXT |
+
+### Reglas de integridad
+- Todas las FK con `ON DELETE RESTRICT` (no borrar en cascada silenciosa).
+- `consumo_calculado` se calcula en servidor, no se acepta del cliente.
+- `fecha_fin >= fecha_inicio` obligatorio a nivel de esquema.
+
+---
+
+## 5. Sistema de validaciones (especificación)
+
+Se ejecutan automáticamente al crear o modificar un registro. **Nunca bloquean el guardado**; generan entradas en `validaciones`.
+
+| Código | Validación | Condición | Severidad |
+|---|---|---|---|
+| V01 | Fechas invertidas | `fecha_fin < fecha_inicio` | error |
+| V02 | Duración inusual | días fuera de [25, 35] | advertencia |
+| V03 | Lectura regresiva | `lectura_actual < lectura_anterior` | advertencia |
+| V04 | Discrepancia consumo | \|calculado − facturado\| > 5% | advertencia |
+| V05 | Continuidad | `lectura_anterior` ≠ última `lectura_actual` del servicio | advertencia |
+| V06 | Duplicado | mismo servicio + folio + período | error |
+| V07 | Consumo cero | `lectura_actual == lectura_anterior` | info |
+| V08 | Consumo atípico | Z-score \|Z\| > umbral **o** fuera de IQR **o** desvío vs. mismo mes histórico | advertencia |
+| V09 | Montos inconsistentes | `total` ≠ suma de conceptos (±tolerancia) | advertencia |
+| V10 | Período superpuesto | solapamiento con otro registro del mismo servicio | error |
+
+**Excepciones legítimas:** cambio de medidor, reinicio, ajuste tarifario. Se registran vía `tipo_lectura` + `observaciones` + `historial_cambios`.
+
+---
+
+## 6. Motor de métricas
+
+### Indicadores
+| Indicador | Fórmula |
+|---|---|
+| Consumo total | Σ consumo del período |
+| Promedio mensual | Consumo total / meses con registro |
+| Promedio diario | Consumo / días facturados |
+| Variación mensual | (actual − anterior) / anterior × 100 |
+| Variación interanual | (mes actual − mismo mes año anterior) / mismo mes año anterior × 100 |
+| Costo unitario | monto consumo / consumo |
+| Costo total | Σ montos |
+| Desviación estándar | σ poblacional de la serie |
+| Puntaje Z | (x − μ) / σ |
+
+### Detección de atípicos (3 métodos, todos activos)
+1. **Z-score:** alerta si \|Z\| > umbral (default 2.5, configurable).
+2. **IQR:** atípico si `x < Q1 − 1.5·IQR` o `x > Q3 + 1.5·IQR`.
+3. **Comparación estacional:** vs. mismo mes de años anteriores.
+
+**Regla:** cada alerta debe indicar **qué método la originó**.
+
+### Métricas consolidadas
+- Totales por tipo de servicio (agua / electricidad).
+- Promedios por establecimiento y por servicio.
+- Ranking de mayor variación mensual.
+- Distribución de consumos.
+- Comparación interanual.
+- Conteo de registros con error / advertencia / pendientes.
+- Indicadores normalizados (m³/alumno, kWh/m²) **si hay datos**.
+
+---
+
+## 7. Interfaz (módulos)
+
+| Módulo | Función |
+|---|---|
+| Panel principal | Resumen, alertas, evolución mensual |
+| Establecimientos | CRUD |
+| Servicios | CRUD, medidores por establecimiento |
+| Boletas / Registros | Alta, edición, consulta, adjuntos |
+| Validaciones | Bandeja de errores/advertencias |
+| Métricas | Análisis por servicio, establecimiento y período |
+| Alertas | Historial y gestión |
+| Informes | Exportación Excel / CSV / PDF |
+| Configuración | Parámetros, umbrales, respaldos |
+
+**Regla de UI:** los filtros del panel afectan **simultáneamente** a indicadores, gráficos y tablas.
+
+---
+
+## 8. API REST (contrato mínimo)
+
+| Método | Ruta | Descripción |
+|---|---|---|
+| GET/POST/PUT/DELETE | `/api/establecimientos` | CRUD |
+| GET/POST/PUT/DELETE | `/api/servicios` | CRUD |
+| GET/POST/PUT/DELETE | `/api/registros` | CRUD |
+| GET | `/api/registros/:id/validaciones` | Validaciones del registro |
+| GET | `/api/metricas/resumen` | Totales y promedios |
+| GET | `/api/metricas/atipicos` | Valores atípicos |
+| GET | `/api/alertas` | Alertas activas e históricas |
+| POST | `/api/informes/excel` | Exportar Excel |
+| POST | `/api/informes/pdf` | Exportar PDF |
+| POST | `/api/respaldo` | Generar respaldo |
+
+Formato de respuesta: JSON. Errores con `{ error: { codigo, mensaje } }`.
+
+---
+
+## 9. Estructura de carpetas (canónica)
+
+```
+control-consumos/
+├── package.json
+├── server.js
+├── ESPECIFICACION.md          ← este archivo
+├── config/
+│   └── app.config.js
+├── src/
+│   ├── database/
+│   │   ├── connection.js
+│   │   ├── migrations/
+│   │   └── repositories/
+│   │       ├── establecimientos.js
+│   │       ├── servicios.js
+│   │       ├── registros.js
+│   │       └── parametros.js
+│   ├── services/
+│   │   ├── consumo.service.js
+│   │   ├── validacion.service.js
+│   │   ├── estadistica.service.js
+│   │   ├── alertas.service.js
+│   │   ├── informes.service.js
+│   │   └── respaldo.service.js
+│   ├── routes/
+│   │   ├── establecimientos.routes.js
+│   │   ├── servicios.routes.js
+│   │   ├── registros.routes.js
+│   │   ├── metricas.routes.js
+│   │   └── informes.routes.js
+│   └── utils/
+│       ├── fechas.js
+│       ├── calculos.js
+│       └── formatos.js
+├── public/
+│   ├── index.html
+│   ├── css/
+│   ├── js/
+│   │   ├── app.js
+│   │   ├── router.js
+│   │   ├── api.js
+│   │   ├── components/
+│   │   └── views/
+│   └── assets/
+└── data/
+    ├── consumos.sqlite
+    ├── documentos/
+    └── respaldos/
+```
+
+---
+
+## 10. Flujo de ejecución
+
+1. `npm install`
+2. `npm start`
+3. Abrir `http://localhost:3000`
+4. La base de datos se crea/migra automáticamente al iniciar si no existe.
+
+---
+
+## 11. Hoja de ruta (etapas)
+
+### Etapa 1 — Base de datos y registros
+- [ ] Esquema SQLite + migraciones
+- [ ] CRUD establecimientos
+- [ ] CRUD servicios
+- [ ] CRUD registros/boletas
+- [ ] Respaldo manual de la base
+
+### Etapa 2 — Validaciones
+- [ ] V01–V10 implementadas
+- [ ] Bandeja de validaciones
+- [ ] Historial de correcciones
+- [ ] Justificación de excepciones
+
+### Etapa 3 — Métricas y análisis
+- [ ] Indicadores básicos
+- [ ] Z-score, IQR, comparación estacional
+- [ ] Panel principal con filtros
+- [ ] Gráficos Chart.js
+
+### Etapa 4 — Informes y automatización
+- [ ] Exportación Excel / CSV
+- [ ] Informes PDF
+- [ ] Importación masiva desde Excel
+- [ ] Alertas automáticas y resúmenes
+
+### Etapa 5 — Futuro (fuera del alcance inicial)
+- [ ] OCR de boletas
+- [ ] Normalización por matrícula/superficie
+- [ ] Modo red local con autenticación
+
+---
+
+## 12. Decisiones cerradas
+
+| # | Pregunta | Decisión |
+|---|---|---|
+| 1 | Registro de consumos | **Lecturas + consumo facturado por separado** (Etapa 1). Importación Excel en Etapa 4. |
+| 2 | Identificación de establecimientos | **Código único + nombre + tipo + dirección**. Campos opcionales: matrícula, superficie. |
+| 3 | Parámetros normales | **Configurables por servicio**, con método `fijo`, `historico` o `manual`. |
+| 4 | Informes | **Excel, CSV y PDF** (los tres). |
+| 5 | Modo de uso | **Un solo computador** inicialmente. Red local queda como Etapa 5. |
+
+> Estas decisiones pueden revisarse, pero todo cambio debe reflejarse en este documento **antes** de implementarse.
+
+---
+
+## 13. Convenciones de código
+
+- **Idioma:** nombres de dominio en español (`establecimiento`, `servicio`, `registro`). Código técnico en inglés cuando sea estándar (`id`, `createdAt` interno).
+- **Fechas:** ISO 8601 (`YYYY-MM-DD`) en almacenamiento; formato local solo en UI.
+- **Números:** `REAL` en SQLite; formateo con separador local solo en UI.
+- **Errores:** nunca silenciosos. Siempre registrar en `validaciones` o en log.
+- **Commits:** un cambio de esquema = una migración = un commit.
+
+---
+
+## 14. Criterios de aceptación (v1.0)
+
+- [ ] Se pueden registrar N establecimientos con M servicios cada uno.
+- [ ] Cada servicio mantiene su propio historial de lecturas.
+- [ ] Las validaciones V01–V10 se ejecutan automáticamente.
+- [ ] El panel muestra totales y evolución mensual filtrables.
+- [ ] Se detectan valores atípicos por los 3 métodos.
+- [ ] Se exportan informes a Excel, CSV y PDF.
+- [ ] La base de datos se respalda con un clic.
+- [ ] Todo funciona sin conexión a Internet.
+
+---
+
+**Fin del documento.**
+Cualquier funcionalidad no descrita aquí **no forma parte del alcance** hasta que se agregue explícitamente.

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Control de consumos</title><link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<header><div><strong>Control de consumos</strong><span>Agua y electricidad · funcionamiento local</span></div><span id="status">Conectando…</span></header>
+<main>
+<section class="summary"><article><small>Establecimientos</small><b id="count-est">0</b></article><article><small>Servicios</small><b id="count-ser">0</b></article><article><small>Boletas registradas</small><b id="count-bol">0</b></article></section>
+<nav><button class="tab active" data-tab="establecimientos">Establecimientos</button><button class="tab" data-tab="servicios">Servicios</button><button class="tab" data-tab="boletas">Boletas</button></nav>
+<section id="establecimientos" class="panel"><h2>Establecimientos</h2>
+<form id="form-est"><input name="codigo" placeholder="Código único" required><input name="nombre" placeholder="Nombre del establecimiento" required><input name="tipo" placeholder="Tipo (escuela, liceo…)"><input name="comuna" placeholder="Comuna"><button>Agregar</button></form><div class="table-wrap"><table><thead><tr><th>Código</th><th>Nombre</th><th>Tipo</th><th>Comuna</th></tr></thead><tbody id="rows-est"></tbody></table></div></section>
+<section id="servicios" class="panel hidden"><h2>Servicios y medidores</h2>
+<form id="form-ser"><select name="establecimiento_id" id="sel-est" required><option value="">Establecimiento…</option></select><select name="tipo"><option value="AGUA">Agua</option><option value="ELECTRICIDAD">Electricidad</option></select><input name="nombre" placeholder="Nombre del servicio" required><input name="empresa" placeholder="Empresa proveedora"><input name="numero_cliente" placeholder="N.º cliente"><input name="numero_medidor" placeholder="N.º medidor"><input name="unidad" placeholder="Unidad (m³, kWh)" required><button>Agregar servicio</button></form><div class="table-wrap"><table><thead><tr><th>Establecimiento</th><th>Tipo</th><th>Servicio</th><th>Cliente</th><th>Medidor</th></tr></thead><tbody id="rows-ser"></tbody></table></div></section>
+<section id="boletas" class="panel hidden"><h2>Registrar boleta</h2>
+<form id="form-bol"><select name="servicio_id" id="sel-ser" required><option value="">Servicio…</option></select><input name="folio" placeholder="Folio"><label>Desde<input type="date" name="fecha_inicio" required></label><label>Hasta<input type="date" name="fecha_fin" required></label><label>Emisión<input type="date" name="fecha_emision"></label><input name="lectura_anterior" type="number" step="any" placeholder="Lectura anterior"><input name="lectura_actual" type="number" step="any" placeholder="Lectura actual"><input name="consumo_facturado" type="number" min="0" step="any" placeholder="Consumo facturado" required><input name="monto_total" type="number" min="0" step="1" placeholder="Monto total (CLP)"><textarea name="observacion" placeholder="Observaciones"></textarea><button>Guardar boleta</button></form>
+<div class="table-wrap"><table><thead><tr><th>Establecimiento</th><th>Servicio</th><th>Período</th><th>Consumo</th><th>Monto CLP</th><th>Estado</th></tr></thead><tbody id="rows-bol"></tbody></table></div></section>
+<p id="message" role="status"></p>
+</main><script type="module" src="/js/app.js"></script>
+</body></html>
