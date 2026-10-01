@@ -1,21 +1,808 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Control de consumos</title><link rel="stylesheet" href="/css/styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comic Sound Bar & Button Kit — Consolidado</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:ital,wght@0,700;1,700&family=Fredoka:wght@400;600;700&family=Luckiest+Guy&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    :root {
+        --comic-black: #121212;
+        --paper-bg: #fffdf5;
+    }
+
+    body {
+        font-family: 'Comic Neue', cursive, sans-serif;
+        background-color: #f6ebd6;
+        color: #121212;
+        background-image:
+            radial-gradient(#d1c1a5 18%, transparent 18%),
+            radial-gradient(#d1c1a5 18%, transparent 18%);
+        background-position: 0 0, 10px 10px;
+        background-size: 20px 20px;
+    }
+
+    .comic-font {
+        font-family: 'Bangers', cursive, sans-serif;
+        letter-spacing: 1.5px;
+        text-shadow: 2px 2px 0px #000;
+    }
+
+    .handwritten-font {
+        font-family: 'Comic Neue', cursive, sans-serif;
+        font-weight: 700;
+    }
+
+    /* ==== Comic / Sketch Buttons ==== */
+    .btn-comic {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Bangers', cursive, sans-serif;
+        letter-spacing: 1px;
+        font-size: 1.25rem;
+        color: #121212;
+        background-color: #ffde59;
+        border: 3.5px solid #121212;
+        border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+        box-shadow: 5px 6px 0px #121212;
+        transition: all 0.08s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        user-select: none;
+        cursor: pointer;
+        text-transform: uppercase;
+        padding: 0.5rem 1.5rem;
+        line-height: 1;
+    }
+
+    .sketch-v1 { border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px; }
+    .sketch-v2 { border-radius: 20px 255px 15px 225px / 225px 15px 255px 15px; }
+    .sketch-v3 { border-radius: 15px 225px 255px 15px / 255px 15px 225px 15px; }
+
+    .btn-comic:hover {
+        transform: translate(-2px, -3px) rotate(-1deg);
+        box-shadow: 7px 9px 0px #121212;
+        filter: brightness(1.05);
+    }
+
+    .btn-comic:active, .btn-comic.pressed {
+        transform: translate(4px, 5px) rotate(1deg);
+        box-shadow: 1px 1px 0px #121212;
+        filter: brightness(0.95);
+    }
+
+    .btn-comic:disabled, .btn-comic.disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+        box-shadow: 3px 3px 0px #121212 !important;
+        filter: grayscale(0.5);
+    }
+
+    /* ==== Cartoon (Fredoka) Buttons ==== */
+    .btn-cartoon {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        border: 3.5px solid #111827;
+        border-radius: 20px;
+        box-shadow: 0 6px 0 #111827, 0 8px 15px rgba(0,0,0,0.4);
+        transition: all 0.1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        user-select: none;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        overflow: hidden;
+        font-family: 'Fredoka', 'Nunito', sans-serif;
+    }
+    .btn-cartoon::before {
+        content: '';
+        position: absolute;
+        top: 3px; left: 6px; right: 6px;
+        height: 35%;
+        background: linear-gradient(to bottom, rgba(255,255,255,0.45), rgba(255,255,255,0.05));
+        border-radius: 12px 12px 6px 6px;
+        pointer-events: none;
+    }
+    .btn-cartoon:hover { transform: translateY(-3px); box-shadow: 0 9px 0 #111827, 0 12px 20px rgba(0,0,0,0.4); filter: brightness(1.08); }
+    .btn-cartoon:active, .btn-cartoon.pressed { transform: translateY(4px); box-shadow: 0 2px 0 #111827, 0 3px 6px rgba(0,0,0,0.4); filter: brightness(0.95); }
+    .btn-cartoon:disabled, .btn-cartoon.disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; box-shadow: 0 4px 0 #111827 !important; filter: grayscale(0.5); }
+
+    /* ==== Avatar Emotion Badges ==== */
+    .btn-avatar-badge {
+        width: 82px; height: 82px;
+        border: 4px solid #121212;
+        border-radius: 30% 70% 40% 60% / 60% 30% 70% 40%;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 6px 7px 0px #121212;
+        transition: all 0.12s ease;
+        position: relative;
+        cursor: pointer;
+        user-select: none;
+        background-color: #ffffff;
+    }
+    .btn-avatar-badge::before {
+        content: '';
+        position: absolute;
+        inset: 3px;
+        border: 2px dashed rgba(18,18,18,0.4);
+        border-radius: inherit;
+        pointer-events: none;
+    }
+    .btn-avatar-badge:hover { transform: scale(1.1) rotate(-3deg); box-shadow: 8px 10px 0px #121212; }
+    .btn-avatar-badge:active { transform: scale(0.94) translate(3px, 4px) rotate(2deg); box-shadow: 2px 2px 0px #121212; }
+
+    /* ==== Colors ==== */
+    .btn-yellow { background-color: #FFDE59; }
+    .btn-white { background-color: #FFFFFF; }
+    .btn-grey { background-color: #CBD5E1; }
+    .btn-red { background-color: #FF5757; color: #FFFFFF; text-shadow: 1.5px 1.5px 0 #000; }
+    .btn-orange { background-color: #FF914D; color: #FFFFFF; text-shadow: 1.5px 1.5px 0 #000; }
+    .btn-green { background-color: #7ED957; }
+    .btn-blue { background-color: #38B6FF; }
+    .btn-purple { background-color: #CB6CE6; color: #FFFFFF; text-shadow: 1.5px 1.5px 0 #000; }
+    .btn-cyan { background-color: #00C2CB; color: #FFFFFF; text-shadow: 1.5px 1.5px 0 #000; }
+    .btn-pink { background-color: #FF66C4; color: #FFFFFF; text-shadow: 1.5px 1.5px 0 #000; }
+    .btn-dark-grey { background-color: #475569; color: #FFFFFF; text-shadow: 1.5px 1.5px 0 #000; }
+
+    /* ==== Sound Square Buttons ==== */
+    .sound-card-btn {
+        min-height: 90px;
+        border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 0.75rem 1rem;
+        gap: 0.75rem;
+    }
+    .sound-btn {
+        width: 90px; height: 90px;
+        border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        padding: 0;
+    }
+    .btn-cartoon.sound-btn { width: 88px; height: 88px; border-radius: 26px; }
+
+    /* ==== Sizes ==== */
+    .btn-lg { height: 58px; padding: 0 28px; font-size: 1.4rem; }
+    .btn-md { height: 46px; padding: 0 20px; font-size: 1.15rem; }
+    .btn-sm { height: 34px; padding: 0 14px; font-size: 0.95rem; border-width: 2.5px; box-shadow: 3px 4px 0px #121212; }
+    .btn-sm:hover { box-shadow: 4px 6px 0px #121212; }
+
+    .btn-cartoon.btn-lg { height: 56px; padding: 0 28px; font-size: 1.15rem; border-radius: 22px; }
+    .btn-cartoon.btn-md { height: 44px; padding: 0 20px; font-size: 0.95rem; border-radius: 18px; }
+    .btn-cartoon.btn-sm { height: 32px; padding: 0 14px; font-size: 0.8rem; border-radius: 14px; border-width: 2.5px; box-shadow: 0 4px 0 #111827; }
+
+    /* ==== Circle Buttons ==== */
+    .btn-circle {
+        width: 56px; height: 56px;
+        border-radius: 50% 45% 52% 48% / 48% 52% 45% 50%;
+        padding: 0;
+    }
+    .btn-cartoon.btn-circle { width: 54px; height: 54px; border-radius: 50%; }
+
+    /* ==== Comic Pop Animation ==== */
+    @keyframes comicPopAnim {
+        0%   { transform: scale(0.3) rotate(-15deg); opacity: 0; }
+        50%  { transform: scale(1.3) rotate(8deg); opacity: 1; }
+        100% { transform: scale(1) translateY(-30px) rotate(-5deg); opacity: 0; }
+    }
+    .comic-pop {
+        position: fixed;
+        pointer-events: none;
+        z-index: 1000;
+        font-family: 'Bangers', cursive;
+        font-size: 2.75rem;
+        color: #FFDE59;
+        -webkit-text-stroke: 2.5px #000;
+        text-shadow: 4px 4px 0 #000;
+        animation: comicPopAnim 0.65s ease-out forwards;
+    }
+
+    /* ==== Comic Card Shell ==== */
+    .comic-card {
+        background: #FFFDF5;
+        border: 4px solid #121212;
+        border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+        box-shadow: 8px 10px 0px #121212;
+    }
+
+    .sparkles { position: relative; }
+    .sparkles::after, .sparkles::before {
+        content: '✨';
+        position: absolute;
+        font-size: 14px;
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+    .sparkles:hover::after { opacity: 1; top: -12px; right: -10px; }
+    .sparkles:hover::before { opacity: 1; bottom: -12px; left: -10px; }
+</style>
 </head>
-<body>
-<header><div><strong>Control de consumos</strong><span>Agua y electricidad · funcionamiento local</span></div><span id="status">Conectando…</span></header>
-<main>
-<section class="summary"><article><small>Establecimientos</small><b id="count-est">0</b></article><article><small>Servicios</small><b id="count-ser">0</b></article><article><small>Boletas registradas</small><b id="count-bol">0</b></article></section>
-<nav><button class="tab active" data-tab="establecimientos">Establecimientos</button><button class="tab" data-tab="servicios">Servicios</button><button class="tab" data-tab="boletas">Boletas</button></nav>
-<section id="establecimientos" class="panel"><h2>Establecimientos</h2>
-<form id="form-est"><input name="codigo" placeholder="Código único" required><input name="nombre" placeholder="Nombre del establecimiento" required><input name="tipo" placeholder="Tipo (escuela, liceo…)"><input name="comuna" placeholder="Comuna"><button>Agregar</button></form><div class="table-wrap"><table><thead><tr><th>Código</th><th>Nombre</th><th>Tipo</th><th>Comuna</th></tr></thead><tbody id="rows-est"></tbody></table></div></section>
-<section id="servicios" class="panel hidden"><h2>Servicios y medidores</h2>
-<form id="form-ser"><select name="establecimiento_id" id="sel-est" required><option value="">Establecimiento…</option></select><select name="tipo"><option value="AGUA">Agua</option><option value="ELECTRICIDAD">Electricidad</option></select><input name="nombre" placeholder="Nombre del servicio" required><input name="empresa" placeholder="Empresa proveedora"><input name="numero_cliente" placeholder="N.º cliente"><input name="numero_medidor" placeholder="N.º medidor"><input name="unidad" placeholder="Unidad (m³, kWh)" required><button>Agregar servicio</button></form><div class="table-wrap"><table><thead><tr><th>Establecimiento</th><th>Tipo</th><th>Servicio</th><th>Cliente</th><th>Medidor</th></tr></thead><tbody id="rows-ser"></tbody></table></div></section>
-<section id="boletas" class="panel hidden"><h2>Registrar boleta</h2>
-<form id="form-bol"><select name="servicio_id" id="sel-ser" required><option value="">Servicio…</option></select><input name="folio" placeholder="Folio"><label>Desde<input type="date" name="fecha_inicio" required></label><label>Hasta<input type="date" name="fecha_fin" required></label><label>Emisión<input type="date" name="fecha_emision"></label><input name="lectura_anterior" type="number" step="any" placeholder="Lectura anterior"><input name="lectura_actual" type="number" step="any" placeholder="Lectura actual"><input name="consumo_facturado" type="number" min="0" step="any" placeholder="Consumo facturado" required><input name="monto_total" type="number" min="0" step="1" placeholder="Monto total (CLP)"><textarea name="observacion" placeholder="Observaciones"></textarea><button>Guardar boleta</button></form>
-<div class="table-wrap"><table><thead><tr><th>Establecimiento</th><th>Servicio</th><th>Período</th><th>Consumo</th><th>Monto CLP</th><th>Estado</th></tr></thead><tbody id="rows-bol"></tbody></table></div></section>
-<p id="message" role="status"></p>
-</main><script type="module" src="/js/app.js"></script>
-</body></html>
+<body class="min-h-screen pb-20">
+
+<!-- HEADER -->
+<header class="sticky top-0 z-50 bg-amber-300 border-b-4 border-black px-4 py-3 shadow-[0_5px_0_#000]">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-red-500 rounded-full border-4 border-black flex items-center justify-center text-white font-bold text-2xl shadow-[3px_3px_0_#000] rotate-3">
+                <i class="fa-solid fa-burst text-yellow-300"></i>
+            </div>
+            <div>
+                <h1 class="comic-font text-3xl text-black tracking-wider leading-none">CÓMIC SOUND & REACTION KIT</h1>
+                <p class="handwritten-font text-xs text-black font-bold">Colección Consolidada · Sound Bar + Avatar + UI Buttons</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button id="soundToggleBtn" onclick="toggleGlobalSound()" class="btn-comic btn-sm btn-white sketch-v1 flex items-center gap-2">
+                <i id="soundIcon" class="fa-solid fa-volume-high text-green-600"></i>
+                <span id="soundText">AUDIO: ON</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 pt-8 space-y-12">
+
+    <!-- ============ 1. REACCIONES RÁPIDAS DE AVATAR (SIN TEXTO) ============ -->
+    <section class="comic-card p-6 md:p-8 relative border-purple-500">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b-4 border-black">
+            <div>
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-masks-theater text-purple-600 text-3xl"></i>
+                    <h2 class="comic-font text-4xl text-black">1. REACCIONES RÁPIDAS DE AVATAR (SIN TEXTO)</h2>
+                </div>
+                <p class="handwritten-font text-slate-800 text-sm mt-1">Botones en forma de insignia rústica con ilustraciones vectoriales. Identificación visual instantánea.</p>
+            </div>
+            <div class="bg-purple-100 px-4 py-2 rounded-xl border-2 border-black text-xs font-bold text-black flex items-center gap-2 shadow-[2px_2px_0_#000]">
+                <i class="fa-solid fa-hand-pointer text-purple-600 animate-bounce"></i>
+                ¡Toca una emoción para ejecutar!
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 justify-items-center py-4">
+            <!-- Celebración -->
+            <div class="flex flex-col items-center gap-2">
+                <button onclick="triggerAvatarReaction('celebration','¡YAY!',event)" class="btn-avatar-badge btn-yellow group" title="Celebración">
+                    <svg class="w-12 h-12 text-black transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M6 9H18V12C18 15.3137 15.3137 18 12 18C8.68629 18 6 15.3137 6 12V9Z" fill="#FFC72C" />
+                        <path d="M6 9H4C2.89543 9 2 9.89543 2 11V12C2 13.1046 2.89543 14 4 14H6" />
+                        <path d="M18 9H20C21.1046 9 22 9.89543 22 11V12C22 13.1046 21.1046 14 20 14H18" />
+                        <path d="M12 18V21M9 21H15" stroke-width="2.5" />
+                        <circle cx="5" cy="4" r="1" fill="#FF5757" />
+                        <circle cx="19" cy="5" r="1.5" fill="#38B6FF" />
+                        <path d="M12 2L13 5L10 4Z" fill="#7ED957" />
+                    </svg>
+                </button>
+                <span class="handwritten-font text-xs font-bold text-black uppercase">Celebración</span>
+            </div>
+            <!-- Enojo -->
+            <div class="flex flex-col items-center gap-2">
+                <button onclick="triggerAvatarReaction('anger','¡GRRR!',event)" class="btn-avatar-badge btn-red group" title="Enojo">
+                    <svg class="w-12 h-12 text-white transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="13" r="8" fill="#FF5757" />
+                        <path d="M7 9.5L10.5 11.5M17 9.5L13.5 11.5" stroke="#121212" stroke-width="3" />
+                        <circle cx="9" cy="13" r="1.2" fill="#121212" />
+                        <circle cx="15" cy="13" r="1.2" fill="#121212" />
+                        <path d="M9 17C11 15 13 15 15 17" stroke="#121212" stroke-width="2.5" />
+                        <path d="M8 4C8 4 7 2 9 1" stroke="#FFDE59" stroke-width="2.5" />
+                        <path d="M12 3C12 3 12 1 13 1" stroke="#FF914D" stroke-width="2.5" />
+                        <path d="M16 4C16 4 17 2 15 1" stroke="#FFDE59" stroke-width="2.5" />
+                    </svg>
+                </button>
+                <span class="handwritten-font text-xs font-bold text-black uppercase">Enojo</span>
+            </div>
+            <!-- Ánimo -->
+            <div class="flex flex-col items-center gap-2">
+                <button onclick="triggerAvatarReaction('cheer','¡POWER!',event)" class="btn-avatar-badge btn-green group" title="Ánimo">
+                    <svg class="w-12 h-12 text-black transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 10a4 4 0 0 1-4 4h-1a2 2 0 0 1-2-2V9a3 3 0 0 0-3-3H7a2 2 0 0 0-2 2v6a4 4 0 0 0 4 4h8" fill="#7ED957" />
+                        <path d="M6 14h2" />
+                        <path d="M13 2L14.5 4.5L17 5L15 7L15.5 9.5L13 8L10.5 9.5L11 7L9 5L11.5 4.5L13 2Z" fill="#FFDE59" stroke="#121212" stroke-width="1.5" />
+                    </svg>
+                </button>
+                <span class="handwritten-font text-xs font-bold text-black uppercase">Ánimo</span>
+            </div>
+            <!-- Nervioso -->
+            <div class="flex flex-col items-center gap-2">
+                <button onclick="triggerAvatarReaction('nervous','¡OOH...!',event)" class="btn-avatar-badge btn-cyan group" title="Nervioso">
+                    <svg class="w-12 h-12 text-white transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="13" r="8.5" fill="#00C2CB" />
+                        <circle cx="9" cy="11" r="2.5" fill="#FFF" stroke="#121212" stroke-width="1.5" />
+                        <circle cx="15" cy="11" r="2.5" fill="#FFF" stroke="#121212" stroke-width="1.5" />
+                        <circle cx="9" cy="11" r="1" fill="#121212" />
+                        <circle cx="15" cy="11" r="1" fill="#121212" />
+                        <path d="M8.5 17C10 16 11 18 12.5 16.5C14 15 15.5 17 15.5 17" stroke="#121212" stroke-width="2" />
+                        <path d="M18.5 6.5C18.5 7.8 17.5 9 16.2 9C15 9 15 7.8 16.2 6C17.5 6 18.5 5.2 18.5 6.5Z" fill="#38B6FF" stroke="#121212" stroke-width="1.2" />
+                    </svg>
+                </button>
+                <span class="handwritten-font text-xs font-bold text-black uppercase">Nervioso</span>
+            </div>
+            <!-- Derrota -->
+            <div class="flex flex-col items-center gap-2">
+                <button onclick="triggerAvatarReaction('defeat','¡K.O.!',event)" class="btn-avatar-badge btn-dark-grey group" title="Derrota">
+                    <svg class="w-12 h-12 text-white transition-transform group-hover:scale-110" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 21V3" stroke="#121212" stroke-width="3" />
+                        <path d="M4 4H16L13 8L16 12H4" fill="#FFFFFF" stroke="#121212" stroke-width="2" />
+                        <path d="M16 16L19 19M19 16L16 19" stroke="#FF5757" stroke-width="3" />
+                        <path d="M9 16L12 19M12 16L9 19" stroke="#FF5757" stroke-width="3" />
+                    </svg>
+                </button>
+                <span class="handwritten-font text-xs font-bold text-black uppercase">Derrota</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ 2. SOUND BAR (CATEGORÍAS CON VARIACIONES) ============ -->
+    <section class="comic-card p-6 md:p-8 relative">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b-4 border-black">
+            <div>
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-volume-high text-red-500 text-3xl"></i>
+                    <h2 class="comic-font text-4xl text-black">2. SOUND BAR (EFECTOS SINTETIZADOS)</h2>
+                </div>
+                <p class="handwritten-font text-slate-800 text-sm mt-1">Efectos de audio sintetizados mediante Web Audio API en tiempo real al hacer clic.</p>
+            </div>
+        </div>
+
+        <!-- RISAS -->
+        <div class="mb-8">
+            <h3 class="comic-font text-2xl text-amber-600 mb-3 flex items-center gap-2"><i class="fa-solid fa-face-laugh-beam"></i> CATEGORÍA: RISAS</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <button onclick="playSynthesizedSound('laugh_tease','¡HA-HA!',event)" class="btn-comic sound-card-btn btn-yellow sketch-v1 w-full">
+                    <i class="fa-solid fa-face-laugh-squint text-3xl"></i>
+                    <div class="text-left"><span class="comic-font block text-xl leading-none">Risa Burlona</span><span class="handwritten-font text-xs text-black">Tono burlón y rápido</span></div>
+                </button>
+                <button onclick="playSynthesizedSound('laugh_evil','¡BUA-HA-HA!',event)" class="btn-comic sound-card-btn btn-yellow sketch-v2 w-full">
+                    <i class="fa-solid fa-face-grin-demonic text-3xl"></i>
+                    <div class="text-left"><span class="comic-font block text-xl leading-none">Risa Malvada</span><span class="handwritten-font text-xs text-black">Carcajada grave de villano</span></div>
+                </button>
+                <button onclick="playSynthesizedSound('laugh_light','¡HE-HE!',event)" class="btn-comic sound-card-btn btn-yellow sketch-v3 w-full">
+                    <i class="fa-solid fa-face-smile-beam text-3xl"></i>
+                    <div class="text-left"><span class="comic-font block text-xl leading-none">Risa Ligera</span><span class="handwritten-font text-xs text-black">Risita suave y breve</span></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- APLAUSOS -->
+        <div class="mb-8">
+            <h3 class="comic-font text-2xl text-green-600 mb-3 flex items-center gap-2"><i class="fa-solid fa-hands-clapping"></i> CATEGORÍA: APLAUSOS</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <button onclick="playSynthesizedSound('clap_euphoric','¡CLAP-CLAP!',event)" class="btn-comic sound-card-btn btn-green sketch-v1 w-full">
+                    <i class="fa-solid fa-hands-clapping text-3xl"></i>
+                    <div class="text-left"><span class="comic-font block text-xl leading-none">Aplauso Eufórico</span><span class="handwritten-font text-xs text-black">Rápido y entusiasta</span></div>
+                </button>
+                <button onclick="playSynthesizedSound('clap_slow','...CLAP...',event)" class="btn-comic sound-card-btn btn-green sketch-v2 w-full">
+                    <i class="fa-solid fa-hand-sparkles text-3xl"></i>
+                    <div class="text-left"><span class="comic-font block text-xl leading-none">Aplauso Irónico</span><span class="handwritten-font text-xs text-black">Lento y sarcástico</span></div>
+                </button>
+                <button onclick="playSynthesizedSound('clap_ovation','¡BRAVO!',event)" class="btn-comic sound-card-btn btn-green sketch-v3 w-full">
+                    <i class="fa-solid fa-award text-3xl"></i>
+                    <div class="text-left"><span class="comic-font block text-xl leading-none">Ovación Multitud</span><span class="handwritten-font text-xs text-black">Gran aclamación</span></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- ABUCHEOS -->
+        <div class="mb-8">
+            <h3 class="comic-font text-2xl text-slate-700 mb-3 flex items-center gap-2"><i class="fa-solid fa-thumbs-down"></i> CATEGORÍA: ABUCHEOS</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button onclick="playSynthesizedSound('boo_soft','¡BOO...!',event)" class="btn-comic sound-card-btn btn-dark-grey sketch-v1 w-full">
+                    <i class="fa-solid fa-thumbs-down text-3xl"></i>
+                    <div class="text-left"><span class="comic-font block text-xl leading-none">Abucheo Suave</span><span class="handwritten-font text-xs text-white">Desaprobación clásica</span></div>
+                </button>
+                <button onclick="playSynthesizedSound('boo_whistle','¡BOO! 📣',event)" class="btn-comic sound-card-btn btn-dark-grey sketch-v2 w-full">
+                    <i class="fa-solid fa-face-frown text-3xl"></i>
+                    <div class="text-left"><span class="comic-font block text-xl leading-none">Abucheo Masivo</span><span class="handwritten-font text-xs text-white">Con silbidos de multitud</span></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- GRITOS -->
+        <div class="mb-8">
+            <h3 class="comic-font text-2xl text-red-600 mb-3 flex items-center gap-2"><i class="fa-solid fa-volume-xmark"></i> CATEGORÍA: GRITOS</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button onclick="playSynthesizedSound('scream_scare','¡AAAAHHH!',event)" class="btn-comic sound-card-btn btn-red sketch-v1 w-full">
+                    <i class="fa-solid fa-ghost text-3xl"></i>
+                    <div class="text-left"><span class="comic-font block text-xl leading-none">Grito de Pánico</span><span class="handwritten-font text-xs text-white">Susto agudo / Terror</span></div>
+                </button>
+                <button onclick="playSynthesizedSound('scream_warrior','¡AYY YAYAY!',event)" class="btn-comic sound-card-btn btn-orange sketch-v2 w-full">
+                    <i class="fa-solid fa-hand-fist text-3xl"></i>
+                    <div class="text-left"><span class="comic-font block text-xl leading-none">Grito de Guerra</span><span class="handwritten-font text-xs text-white">Entusiasmo y victoria</span></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- OTROS EFECTOS -->
+        <div>
+            <h3 class="comic-font text-2xl text-blue-600 mb-3 flex items-center gap-2"><i class="fa-solid fa-icons"></i> OTROS EFECTOS CLÁSICOS</h3>
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                <button onclick="playSynthesizedSound('horn','¡TOOT!',event)" class="btn-comic sound-card-btn btn-blue sketch-v1 flex-col !justify-center text-center p-2">
+                    <i class="fa-solid fa-bullhorn text-2xl"></i><span class="comic-font text-base leading-none">Corneta</span>
+                </button>
+                <button onclick="playSynthesizedSound('explosion','¡BOOM!',event)" class="btn-comic sound-card-btn btn-red sketch-v2 flex-col !justify-center text-center p-2">
+                    <i class="fa-solid fa-burst text-2xl"></i><span class="comic-font text-base leading-none">Explosión</span>
+                </button>
+                <button onclick="playSynthesizedSound('alarm','¡WEE-WOO!',event)" class="btn-comic sound-card-btn btn-orange sketch-v3 flex-col !justify-center text-center p-2">
+                    <i class="fa-solid fa-bell text-2xl"></i><span class="comic-font text-base leading-none">Alarma</span>
+                </button>
+                <button onclick="playSynthesizedSound('megaphone','¡ATTENTION!',event)" class="btn-comic sound-card-btn btn-purple sketch-v1 flex-col !justify-center text-center p-2">
+                    <i class="fa-solid fa-bullhorn text-2xl"></i><span class="comic-font text-base leading-none">Megáfono</span>
+                </button>
+                <button onclick="playSynthesizedSound('baby_cry','¡WAAAH!',event)" class="btn-comic sound-card-btn btn-cyan sketch-v2 flex-col !justify-center text-center p-2">
+                    <i class="fa-solid fa-baby text-2xl"></i><span class="comic-font text-base leading-none">Llanto Bebé</span>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ 3. VARIANTES PRINCIPALES (COMIC) ============ -->
+    <section class="comic-card p-6 md:p-8">
+        <div class="mb-6 pb-4 border-b-4 border-black">
+            <h2 class="comic-font text-4xl text-black">3. VARIANTES PRINCIPALES (COMIC / SKETCH)</h2>
+            <p class="handwritten-font text-slate-800 text-sm">Jerarquía visual con trazos irregulares tipo boceto.</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-amber-100/60 p-5 rounded-2xl border-2 border-black flex flex-col items-center justify-between gap-4 shadow-[3px_3px_0_#000]">
+                <button onclick="playSynthesizedSound('click','¡START!',event)" class="btn-comic btn-lg btn-yellow sketch-v1 w-full flex items-center gap-3">
+                    <i class="fa-solid fa-play"></i> INICIAR JUEGO
+                </button>
+                <div class="text-center"><span class="handwritten-font font-bold text-black text-base">Principal</span><p class="handwritten-font text-xs text-slate-700">Acción más importante</p></div>
+            </div>
+            <div class="bg-amber-100/60 p-5 rounded-2xl border-2 border-black flex flex-col items-center justify-between gap-4 shadow-[3px_3px_0_#000]">
+                <button onclick="playSynthesizedSound('click','¡GEAR!',event)" class="btn-comic btn-lg btn-white sketch-v2 w-full flex items-center gap-3">
+                    <i class="fa-solid fa-gear"></i> CONFIGURACIÓN
+                </button>
+                <div class="text-center"><span class="handwritten-font font-bold text-black text-base">Secundario</span><p class="handwritten-font text-xs text-slate-700">Acciones complementarias</p></div>
+            </div>
+            <div class="bg-amber-100/60 p-5 rounded-2xl border-2 border-black flex flex-col items-center justify-between gap-4 shadow-[3px_3px_0_#000]">
+                <button onclick="playSynthesizedSound('click','¡BACK!',event)" class="btn-comic btn-lg btn-grey sketch-v3 w-full flex items-center gap-3">
+                    <i class="fa-solid fa-arrow-left"></i> VOLVER
+                </button>
+                <div class="text-center"><span class="handwritten-font font-bold text-black text-base">Terciario</span><p class="handwritten-font text-xs text-slate-700">Navegación o cierre</p></div>
+            </div>
+            <div class="bg-amber-100/60 p-5 rounded-2xl border-2 border-black flex flex-col items-center justify-between gap-4 shadow-[3px_3px_0_#000]">
+                <button onclick="playSynthesizedSound('click','¡DELETE!',event)" class="btn-comic btn-lg btn-red sketch-v1 w-full flex items-center gap-3">
+                    <i class="fa-solid fa-xmark"></i> ELIMINAR
+                </button>
+                <div class="text-center"><span class="handwritten-font font-bold text-black text-base">Peligro</span><p class="handwritten-font text-xs text-slate-700">Acciones irreversibles</p></div>
+            </div>
+            <div class="bg-amber-100/60 p-5 rounded-2xl border-2 border-black flex flex-col items-center justify-between gap-4 shadow-[3px_3px_0_#000]">
+                <button onclick="playSynthesizedSound('click','¡SAVE!',event)" class="btn-comic btn-lg btn-green sketch-v2 w-full flex items-center gap-3">
+                    <i class="fa-solid fa-check"></i> GUARDAR
+                </button>
+                <div class="text-center"><span class="handwritten-font font-bold text-black text-base">Éxito / Confirmación</span><p class="handwritten-font text-xs text-slate-700">Guardar o confirmar</p></div>
+            </div>
+            <div class="bg-amber-100/60 p-5 rounded-2xl border-2 border-black flex flex-col items-center justify-between gap-4 shadow-[3px_3px_0_#000]">
+                <button onclick="playSynthesizedSound('click','¡PAUSE!',event)" class="btn-comic btn-lg btn-yellow sketch-v3 w-full flex items-center gap-3">
+                    <i class="fa-solid fa-pause"></i> PAUSAR
+                </button>
+                <div class="text-center"><span class="handwritten-font font-bold text-black text-base">Alerta</span><p class="handwritten-font text-xs text-slate-700">Requiere atención o pausa</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ 4. MATRIZ DE ESTADOS (COMIC) ============ -->
+    <section class="comic-card p-6 md:p-8">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b-4 border-black">
+            <div>
+                <h2 class="comic-font text-4xl text-black">4. MATRIZ DE ESTADOS (COMIC)</h2>
+                <p class="handwritten-font text-slate-800 text-sm">Estados rústicos: Normal, Hover, Presionado, Deshabilitado, Cargando y Éxito.</p>
+            </div>
+        </div>
+        <div class="overflow-x-auto pb-4">
+            <table class="w-full min-w-[700px] text-left border-collapse">
+                <thead>
+                    <tr class="handwritten-font text-black text-sm border-b-2 border-black">
+                        <th class="py-3 px-2">Tipo</th>
+                        <th class="py-3 px-2 text-center">Normal</th>
+                        <th class="py-3 px-2 text-center">Hover</th>
+                        <th class="py-3 px-2 text-center">Presionado</th>
+                        <th class="py-3 px-2 text-center">Deshabilitado</th>
+                        <th class="py-3 px-2 text-center">Cargando</th>
+                        <th class="py-3 px-2 text-center">Éxito</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y-2 divide-black/20 handwritten-font">
+                    <tr>
+                        <td class="py-4 font-bold text-black">Principal<br><span class="text-xs text-slate-600">(Inicio)</span></td>
+                        <td class="py-4 text-center"><button class="btn-comic btn-md btn-yellow sketch-v1"><i class="fa-solid fa-play mr-2 text-xs"></i>INICIAR</button></td>
+                        <td class="py-4 text-center"><button class="btn-comic btn-md btn-yellow sketch-v1 brightness-105 -translate-y-1 shadow-[7px_9px_0_#121212]"><i class="fa-solid fa-play mr-2 text-xs"></i>INICIAR</button></td>
+                        <td class="py-4 text-center"><button class="btn-comic btn-md btn-yellow sketch-v1 translate-x-1 translate-y-1 shadow-[1px_1px_0_#121212]"><i class="fa-solid fa-play mr-2 text-xs"></i>INICIAR</button></td>
+                        <td class="py-4 text-center"><button disabled class="btn-comic btn-md btn-yellow sketch-v1 disabled"><i class="fa-solid fa-play mr-2 text-xs"></i>INICIAR</button></td>
+                        <td class="py-4 text-center"><button id="demo-state-loading" class="btn-comic btn-md btn-yellow sketch-v1"><i class="fa-solid fa-spinner animate-spin mr-2"></i>CARGANDO...</button></td>
+                        <td class="py-4 text-center"><button id="demo-state-success" class="btn-comic btn-md btn-green sketch-v1"><i class="fa-solid fa-check mr-2"></i>¡LISTO!</button></td>
+                    </tr>
+                    <tr>
+                        <td class="py-4 font-bold text-black">Peligro<br><span class="text-xs text-slate-600">(Eliminar)</span></td>
+                        <td class="py-4 text-center"><button class="btn-comic btn-md btn-red sketch-v2"><i class="fa-solid fa-xmark mr-2 text-xs"></i>ELIMINAR</button></td>
+                        <td class="py-4 text-center"><button class="btn-comic btn-md btn-red sketch-v2 brightness-105 -translate-y-1 shadow-[7px_9px_0_#121212]"><i class="fa-solid fa-xmark mr-2 text-xs"></i>ELIMINAR</button></td>
+                        <td class="py-4 text-center"><button class="btn-comic btn-md btn-red sketch-v2 translate-x-1 translate-y-1 shadow-[1px_1px_0_#121212]"><i class="fa-solid fa-xmark mr-2 text-xs"></i>ELIMINAR</button></td>
+                        <td class="py-4 text-center"><button disabled class="btn-comic btn-md btn-red sketch-v2 disabled"><i class="fa-solid fa-xmark mr-2 text-xs"></i>ELIMINAR</button></td>
+                        <td class="py-4 text-center"><button class="btn-comic btn-md btn-red sketch-v2"><i class="fa-solid fa-spinner animate-spin mr-2"></i>BORRANDO...</button></td>
+                        <td class="py-4 text-center"><button class="btn-comic btn-md btn-red sketch-v2"><i class="fa-solid fa-trash-can mr-2"></i>ELIMINADO</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- ============ 5. TAMAÑOS + CIRCULARES Y PÍLDORAS ============ -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+        <div class="comic-card p-6 flex flex-col justify-between">
+            <div>
+                <div class="mb-4 pb-3 border-b-4 border-black">
+                    <h2 class="comic-font text-3xl text-black">5. TAMAÑOS RÚSTICOS</h2>
+                    <p class="handwritten-font text-xs text-slate-700">Proporciones escalables dibujadas a mano.</p>
+                </div>
+                <div class="space-y-6 my-4">
+                    <div class="flex items-center justify-between gap-4 bg-amber-100/50 p-3 rounded-2xl border-2 border-black">
+                        <div><span class="comic-font text-lg text-black block">Grande (58 px)</span><span class="handwritten-font text-xs text-slate-700">Pantallas Principales</span></div>
+                        <button class="btn-comic btn-lg btn-yellow sketch-v1 gap-2"><i class="fa-solid fa-play text-sm"></i> INICIAR JUEGO</button>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 bg-amber-100/50 p-3 rounded-2xl border-2 border-black">
+                        <div><span class="comic-font text-lg text-black block">Mediano (46 px)</span><span class="handwritten-font text-xs text-slate-700">Uso General Menú</span></div>
+                        <button class="btn-comic btn-md btn-yellow sketch-v2 gap-2"><i class="fa-solid fa-play text-xs"></i> INICIAR JUEGO</button>
+                    </div>
+                    <div class="flex items-center justify-between gap-4 bg-amber-100/50 p-3 rounded-2xl border-2 border-black">
+                        <div><span class="comic-font text-lg text-black block">Pequeño (34 px)</span><span class="handwritten-font text-xs text-slate-700">Herramientas Secundarias</span></div>
+                        <button class="btn-comic btn-sm btn-yellow sketch-v3 gap-1"><i class="fa-solid fa-play text-[10px]"></i> INICIAR</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="comic-card p-6">
+            <div class="mb-4 pb-3 border-b-4 border-black">
+                <h2 class="comic-font text-3xl text-black">6. CIRCULARES Y PÍLDORAS (COMIC)</h2>
+                <p class="handwritten-font text-xs text-slate-700">Formatos redondos de trazo orgánico.</p>
+            </div>
+            <div class="mb-6">
+                <span class="comic-font text-lg text-black block mb-3">Circulares Rápidos</span>
+                <div class="flex flex-wrap items-center gap-3">
+                    <button class="btn-comic btn-circle btn-green text-xl" title="Iniciar"><i class="fa-solid fa-play"></i></button>
+                    <button class="btn-comic btn-circle btn-red text-xl" title="Pausar"><i class="fa-solid fa-pause"></i></button>
+                    <button class="btn-comic btn-circle btn-grey text-xl" title="Configurar"><i class="fa-solid fa-gear"></i></button>
+                    <button class="btn-comic btn-circle btn-blue text-xl" title="Siguiente"><i class="fa-solid fa-chevron-right"></i></button>
+                    <button class="btn-comic btn-circle btn-yellow text-xl" title="Info"><i class="fa-solid fa-info"></i></button>
+                </div>
+            </div>
+            <div>
+                <span class="comic-font text-lg text-black block mb-3">Píldoras Temáticas</span>
+                <div class="flex flex-wrap gap-3">
+                    <button class="btn-comic btn-md btn-white sketch-v1 gap-2"><i class="fa-solid fa-users text-blue-600"></i> EQUIPOS</button>
+                    <button class="btn-comic btn-md btn-purple sketch-v2 gap-2"><i class="fa-solid fa-trophy text-yellow-300"></i> PUNTAJES</button>
+                    <button class="btn-comic btn-md btn-cyan sketch-v3 gap-2"><i class="fa-solid fa-dice text-white"></i> EXTRAS</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ 6. VARIANTES ESPECIALES DEL JUEGO ============ -->
+    <section class="comic-card p-6 md:p-8">
+        <div class="mb-6 pb-4 border-b-4 border-black">
+            <h2 class="comic-font text-4xl text-black">7. VARIANTES ESPECIALES Y PERSONAJES</h2>
+            <p class="handwritten-font text-slate-800 text-sm">Retroalimentación de trivia cómic y banner de personaje flotante.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <button onclick="playSynthesizedSound('clap_euphoric','¡YEAH!',event)" class="btn-comic btn-lg btn-green sketch-v1 w-full sparkles gap-2">
+                <i class="fa-solid fa-check-circle text-xl"></i><span>RESPUESTA CORRECTA</span>
+            </button>
+            <button onclick="playSynthesizedSound('boo_soft','¡NO!',event)" class="btn-comic btn-lg btn-red sketch-v2 w-full gap-2">
+                <i class="fa-solid fa-times-circle text-xl"></i><span>RESPUESTA INCORRECTA</span>
+            </button>
+            <button onclick="playSynthesizedSound('click','¡WAIT!',event)" class="btn-comic btn-lg btn-dark-grey sketch-v3 w-full gap-2">
+                <i class="fa-solid fa-hourglass-half text-xl text-yellow-400"></i><span>MODO ESPERA</span>
+            </button>
+            <button onclick="playSynthesizedSound('horn','¡NEXT!',event)" class="btn-comic btn-lg btn-yellow sketch-v1 w-full sparkles gap-2">
+                <i class="fa-solid fa-star text-xl text-amber-700"></i><span>PRÓXIMO JUEGO</span>
+            </button>
+        </div>
+
+        <div class="mt-8 pt-6 border-t-4 border-black grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+            <div class="bg-amber-100/60 p-4 rounded-2xl border-2 border-black flex items-center gap-4 shadow-[3px_3px_0_#000]">
+                <button class="btn-comic btn-circle btn-blue w-16 h-16 text-2xl"><i class="fa-solid fa-play ml-1"></i></button>
+                <div>
+                    <span class="comic-font text-xl text-black block">Botón Circular Flotante</span>
+                    <span class="handwritten-font text-xs text-slate-700">Acción principal en pantallas de juego</span>
+                </div>
+            </div>
+            <div class="bg-amber-100/60 p-4 rounded-2xl border-2 border-black flex items-center justify-between shadow-[3px_3px_0_#000]">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 rounded-full bg-amber-300 border-2 border-black flex items-center justify-center text-black text-2xl shadow-[2px_2px_0_#000] rotate-6">
+                        <i class="fa-solid fa-user-ninja"></i>
+                    </div>
+                    <div>
+                        <span class="comic-font text-xl text-black block">CUMPEO</span>
+                        <span class="handwritten-font text-xs text-slate-700">Personaje Personalizado</span>
+                    </div>
+                </div>
+                <button class="btn-comic btn-md btn-yellow sketch-v2">¡JUGAR!</button>
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<script>
+/* =================== AUDIO =================== */
+let audioCtx = null;
+let globalSoundEnabled = true;
+
+function initAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+function toggleGlobalSound() {
+    globalSoundEnabled = !globalSoundEnabled;
+    const soundIcon = document.getElementById('soundIcon');
+    const soundText = document.getElementById('soundText');
+    if (globalSoundEnabled) {
+        soundIcon.className = 'fa-solid fa-volume-high text-green-600';
+        soundText.innerText = 'AUDIO: ON';
+    } else {
+        soundIcon.className = 'fa-solid fa-volume-xmark text-red-500';
+        soundText.innerText = 'AUDIO: OFF';
+    }
+}
+
+/* =================== COMIC POP =================== */
+function spawnComicPop(event, customText) {
+    const words = ["POW!","BAM!","BOING!","WHAM!","ZAP!","YEAH!"];
+    const text = customText || words[Math.floor(Math.random() * words.length)];
+    const pop = document.createElement('div');
+    pop.className = 'comic-pop';
+    pop.innerText = text;
+    const x = event ? (event.clientX || window.innerWidth/2) : window.innerWidth/2;
+    const y = event ? (event.clientY || window.innerHeight/2) : window.innerHeight/2;
+    pop.style.left = `${x - 40}px`;
+    pop.style.top  = `${y - 40}px`;
+    document.body.appendChild(pop);
+    setTimeout(() => pop.remove(), 650);
+}
+
+/* =================== AVATAR =================== */
+function triggerAvatarReaction(type, onomatopoeia, event) {
+    spawnComicPop(event, onomatopoeia);
+    if (type === 'celebration') playSynthesizedSound('clap_ovation');
+    else if (type === 'anger')    playSynthesizedSound('boo_whistle');
+    else if (type === 'cheer')    playSynthesizedSound('scream_warrior');
+    else if (type === 'nervous')  playSynthesizedSound('laugh_light');
+    else if (type === 'defeat')   playSynthesizedSound('boo_soft');
+}
+
+/* =================== SINTETIZADOR =================== */
+function playSynthesizedSound(type, popText, event) {
+    if (event && popText) spawnComicPop(event, popText);
+    if (!globalSoundEnabled) return;
+    initAudio();
+    try {
+        const now = audioCtx.currentTime;
+
+        if (type === 'laugh_tease') {
+            [0,0.1,0.2,0.3].forEach((d,i) => {
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+                o.type='sawtooth'; o.frequency.setValueAtTime(400 - i*30, now+d);
+                g.gain.setValueAtTime(0.3, now+d); g.gain.exponentialRampToValueAtTime(0.01, now+d+0.08);
+                o.connect(g); g.connect(audioCtx.destination); o.start(now+d); o.stop(now+d+0.08);
+            });
+        } else if (type === 'laugh_evil') {
+            [0,0.12,0.25,0.38,0.5].forEach((d,i) => {
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+                o.type='sawtooth'; o.frequency.setValueAtTime(130 - i*8, now+d);
+                g.gain.setValueAtTime(0.4, now+d); g.gain.exponentialRampToValueAtTime(0.01, now+d+0.11);
+                o.connect(g); g.connect(audioCtx.destination); o.start(now+d); o.stop(now+d+0.11);
+            });
+        } else if (type === 'laugh_light') {
+            [0,0.07,0.14].forEach((d,i) => {
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+                o.type='sine'; o.frequency.setValueAtTime(500 + i*20, now+d);
+                g.gain.setValueAtTime(0.2, now+d); g.gain.exponentialRampToValueAtTime(0.01, now+d+0.05);
+                o.connect(g); g.connect(audioCtx.destination); o.start(now+d); o.stop(now+d+0.05);
+            });
+        } else if (type === 'clap_euphoric') {
+            [0,0.05,0.1,0.15,0.2,0.25].forEach(d => {
+                const size = audioCtx.sampleRate * 0.05;
+                const buf = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+                const data = buf.getChannelData(0);
+                for (let i=0;i<size;i++) data[i] = Math.random()*2-1;
+                const n = audioCtx.createBufferSource(); n.buffer = buf;
+                const g = audioCtx.createGain();
+                g.gain.setValueAtTime(0.3, now+d); g.gain.exponentialRampToValueAtTime(0.01, now+d+0.05);
+                n.connect(g); g.connect(audioCtx.destination); n.start(now+d);
+            });
+        } else if (type === 'clap_slow') {
+            [0,0.25,0.5,0.75].forEach(d => {
+                const size = audioCtx.sampleRate * 0.07;
+                const buf = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+                const data = buf.getChannelData(0);
+                for (let i=0;i<size;i++) data[i] = Math.random()*2-1;
+                const n = audioCtx.createBufferSource(); n.buffer = buf;
+                const g = audioCtx.createGain();
+                g.gain.setValueAtTime(0.25, now+d); g.gain.exponentialRampToValueAtTime(0.01, now+d+0.07);
+                n.connect(g); g.connect(audioCtx.destination); n.start(now+d);
+            });
+        } else if (type === 'clap_ovation') {
+            const size = audioCtx.sampleRate * 0.9;
+            const buf = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+            const data = buf.getChannelData(0);
+            for (let i=0;i<size;i++) data[i] = (Math.random()*2-1)*0.5;
+            const n = audioCtx.createBufferSource(); n.buffer = buf;
+            const g = audioCtx.createGain();
+            g.gain.setValueAtTime(0.1, now); g.gain.linearRampToValueAtTime(0.4, now+0.2); g.gain.exponentialRampToValueAtTime(0.01, now+0.9);
+            n.connect(g); g.connect(audioCtx.destination); n.start(now);
+        } else if (type === 'boo_soft') {
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.type='sawtooth'; o.frequency.setValueAtTime(140, now); o.frequency.linearRampToValueAtTime(110, now+0.5);
+            g.gain.setValueAtTime(0.25, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.5);
+            o.connect(g); g.connect(audioCtx.destination); o.start(now); o.stop(now+0.5);
+        } else if (type === 'boo_whistle') {
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.type='sawtooth'; o.frequency.setValueAtTime(150, now); o.frequency.linearRampToValueAtTime(90, now+0.8);
+            g.gain.setValueAtTime(0.3, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.8);
+            o.connect(g); g.connect(audioCtx.destination); o.start(now); o.stop(now+0.8);
+            const w = audioCtx.createOscillator(), wg = audioCtx.createGain();
+            w.type='sine'; w.frequency.setValueAtTime(1800, now+0.1); w.frequency.linearRampToValueAtTime(2200, now+0.4);
+            wg.gain.setValueAtTime(0.15, now+0.1); wg.gain.exponentialRampToValueAtTime(0.01, now+0.5);
+            w.connect(wg); wg.connect(audioCtx.destination); w.start(now+0.1); w.stop(now+0.5);
+        } else if (type === 'scream_scare') {
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.type='sawtooth'; o.frequency.setValueAtTime(600, now);
+            o.frequency.exponentialRampToValueAtTime(1200, now+0.15); o.frequency.exponentialRampToValueAtTime(350, now+0.45);
+            g.gain.setValueAtTime(0.35, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.45);
+            o.connect(g); g.connect(audioCtx.destination); o.start(now); o.stop(now+0.45);
+        } else if (type === 'scream_warrior') {
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.type='triangle'; o.frequency.setValueAtTime(220, now);
+            o.frequency.linearRampToValueAtTime(450, now+0.2); o.frequency.setValueAtTime(450, now+0.4);
+            g.gain.setValueAtTime(0.4, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.5);
+            o.connect(g); g.connect(audioCtx.destination); o.start(now); o.stop(now+0.5);
+        } else if (type === 'horn') {
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.type='sawtooth'; o.frequency.setValueAtTime(300, now); o.frequency.linearRampToValueAtTime(450, now+0.15);
+            g.gain.setValueAtTime(0.3, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.35);
+            o.connect(g); g.connect(audioCtx.destination); o.start(now); o.stop(now+0.35);
+        } else if (type === 'explosion') {
+            const size = audioCtx.sampleRate * 0.5;
+            const buf = audioCtx.createBuffer(1, size, audioCtx.sampleRate);
+            const data = buf.getChannelData(0);
+            for (let i=0;i<size;i++) data[i] = Math.random()*2-1;
+            const n = audioCtx.createBufferSource(); n.buffer = buf;
+            const g = audioCtx.createGain();
+            g.gain.setValueAtTime(0.5, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.5);
+            n.connect(g); g.connect(audioCtx.destination); n.start(now);
+        } else if (type === 'alarm') {
+            [0,0.15,0.3].forEach(d => {
+                const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+                o.type='sine'; o.frequency.setValueAtTime(800, now+d); o.frequency.linearRampToValueAtTime(600, now+d+0.1);
+                g.gain.setValueAtTime(0.3, now+d); g.gain.exponentialRampToValueAtTime(0.01, now+d+0.1);
+                o.connect(g); g.connect(audioCtx.destination); o.start(now+d); o.stop(now+d+0.1);
+            });
+        } else if (type === 'megaphone') {
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.type='square'; o.frequency.setValueAtTime(700, now);
+            g.gain.setValueAtTime(0.2, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.25);
+            o.connect(g); g.connect(audioCtx.destination); o.start(now); o.stop(now+0.25);
+        } else if (type === 'baby_cry') {
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.type='sawtooth'; o.frequency.setValueAtTime(500, now); o.frequency.linearRampToValueAtTime(300, now+0.3);
+            g.gain.setValueAtTime(0.25, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.3);
+            o.connect(g); g.connect(audioCtx.destination); o.start(now); o.stop(now+0.3);
+        } else if (type === 'click') {
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.type='sine'; o.frequency.setValueAtTime(600, now);
+            g.gain.setValueAtTime(0.15, now); g.gain.exponentialRampToValueAtTime(0.01, now+0.05);
+            o.connect(g); g.connect(audioCtx.destination); o.start(now); o.stop(now+0.05);
+        }
+    } catch (e) { console.log(e); }
+}
+</script>
+</body>
+</html>
