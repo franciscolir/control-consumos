@@ -1,4 +1,4 @@
-# `ESPECIFICACION.md` — Fuente de verdad del proyecto
+# ESPECIFICACION.md — Fuente de verdad del proyecto
 
 > **Proyecto:** Control de Consumos de Agua y Electricidad en Establecimientos Educacionales
 > **Versión:** 0.1.0 (base inicial)
@@ -13,6 +13,7 @@ Construir una aplicación de escritorio web, **100% local**, que permita a una i
 
 - Registrar boletas de agua y electricidad de múltiples establecimientos.
 - Validar automáticamente lecturas, fechas y montos.
+- Extraer datos de boletas mediante OCR local.
 - Calcular métricas y detectar consumos atípicos.
 - Generar informes exportables (Excel, CSV, PDF).
 - Mantener trazabilidad completa de correcciones y alertas.
@@ -29,37 +30,44 @@ Construir una aplicación de escritorio web, **100% local**, que permita a una i
 4. **Validaciones no bloqueantes.** Se advierte, no se impide registrar excepciones justificadas.
 5. **Trazabilidad total.** Todo cambio queda registrado. Las alertas conservan historial.
 6. **Modularidad.** Interfaz, lógica de negocio, validaciones y datos separados.
+7. **OCR con confirmación humana.** Ningún dato extraído por OCR entra sin revisión.
 
 ---
 
-## 3. Stack tecnológico (obligatorio)
+## 3. Stack tecnológico
 
 | Capa | Tecnología | Restricción |
 |---|---|---|
 | Servidor | Node.js + Express | Local, puerto 3000 por defecto |
 | Base de datos | SQLite | Archivo local en `/data` |
 | Frontend | HTML + CSS + JS modular | Sin frameworks pesados |
-| Gráficos | Chart.js | Instalado localmente, no CDN |
+| Gráficos | Chart.js | Instalado localmente, sin CDN |
 | Excel | SheetJS | Local |
 | PDF | PDFKit | Local |
+| OCR | Tesseract.js | Ejecutado en Node.js, modelos locales en `/data/ocr/tessdata` |
+| Preprocesamiento de imagen | Sharp | Local: rotar, escalar, binarizar |
+| Extracción de PDF | pdf-parse | Solo PDFs con capa de texto |
+| Reconocimiento de patrones | Regex configurables por proveedor | Sin IA en la nube |
 | Empaquetado | npm | Dependencias fijadas en `package.json` |
+
+> ⚠️ **Regla OCR:** ninguna imagen sale del equipo. Tesseract.js corre en proceso local y los `traineddata` se guardan en `/data/ocr/tessdata`.
 
 ---
 
-## 4. Modelo de datos (canónico)
+## 4. Modelo de datos
 
-### Relaciones
-
-```
+### 4.1 Relaciones
 ESTABLECIMIENTO (1) ──< SERVICIO (N) ──< REGISTRO (N)
-                                          │
-                                          ├──< DETALLE_BOLETA (1:1)
-                                          └──< VALIDACION (N)
+├──< DETALLE_BOLETA (1:1)
+└──< VALIDACION (N)
 
 SERVICIO (1) ──< PARAMETRO (N)
-```
 
-### Tablas
+REGISTRO (1) ──< OCR_PROCESO (N) ──< OCR_CAMPO (N)
+
+text
+
+### 4.2 Tablas principales
 
 #### `establecimientos`
 | Campo | Tipo | Notas |
@@ -155,14 +163,58 @@ SERVICIO (1) ──< PARAMETRO (N)
 | clave | TEXT PK |
 | valor | TEXT |
 
-### Reglas de integridad
+#### `ocr_procesos`
+Registra cada intento de OCR sobre una boleta.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | INTEGER PK | |
+| registro_id | INTEGER FK NULL | → registros.id (NULL si aún no se confirmó) |
+| archivo_origen | TEXT | Ruta local en `/data/documentos` |
+| estado | TEXT | 'pendiente' \| 'procesando' \| 'listo' \| 'error' \| 'confirmado' |
+| motor | TEXT | 'tesseract' \| 'pdf-text' \| 'manual' |
+| confianza_global | REAL | 0–100 (promedio ponderado) |
+| texto_crudo | TEXT | Salida completa del OCR |
+| json_extraido | TEXT | Campos detectados en JSON |
+| iniciado_en | TEXT | |
+| finalizado_en | TEXT | NULL si en curso |
+
+#### `ocr_campos`
+Cada campo detectado por el OCR, con su confianza individual.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | INTEGER PK | |
+| ocr_proceso_id | INTEGER FK | → ocr_procesos.id |
+| campo | TEXT | 'fecha_inicio', 'lectura_actual', 'monto_total', etc. |
+| valor_extraido | TEXT | Texto tal como se detectó |
+| valor_normalizado | TEXT | Ya parseado (fecha ISO, número float) |
+| confianza | REAL | 0–100 |
+| metodo | TEXT | 'regex' \| 'posicion' \| 'diccionario' \| 'heuristica' |
+| validado | INTEGER | 1/0 — confirmado por humano |
+
+#### `ocr_plantillas`
+Plantillas por proveedor para mejorar la extracción.
+
+| Campo | Tipo | Notas |
+|---|---|---|
+| id | INTEGER PK | |
+| nombre | TEXT | Ej: "Aguas Andinas – boleta residencial" |
+| proveedor | TEXT | |
+| tipo_servicio | TEXT | 'agua' \| 'electricidad' |
+| patrones_json | TEXT | Regex y reglas por campo |
+| version | INTEGER | |
+| activa | INTEGER | 1/0 |
+
+### 4.3 Reglas de integridad
+
 - Todas las FK con `ON DELETE RESTRICT` (no borrar en cascada silenciosa).
 - `consumo_calculado` se calcula en servidor, no se acepta del cliente.
 - `fecha_fin >= fecha_inicio` obligatorio a nivel de esquema.
 
 ---
 
-## 5. Sistema de validaciones (especificación)
+## 5. Sistema de validaciones
 
 Se ejecutan automáticamente al crear o modificar un registro. **Nunca bloquean el guardado**; generan entradas en `validaciones`.
 
@@ -171,21 +223,33 @@ Se ejecutan automáticamente al crear o modificar un registro. **Nunca bloquean 
 | V01 | Fechas invertidas | `fecha_fin < fecha_inicio` | error |
 | V02 | Duración inusual | días fuera de [25, 35] | advertencia |
 | V03 | Lectura regresiva | `lectura_actual < lectura_anterior` | advertencia |
-| V04 | Discrepancia consumo | \|calculado − facturado\| > 5% | advertencia |
+| V04 | Discrepancia de consumo | \|calculado − facturado\| > 5% | advertencia |
 | V05 | Continuidad | `lectura_anterior` ≠ última `lectura_actual` del servicio | advertencia |
 | V06 | Duplicado | mismo servicio + folio + período | error |
 | V07 | Consumo cero | `lectura_actual == lectura_anterior` | info |
 | V08 | Consumo atípico | Z-score \|Z\| > umbral **o** fuera de IQR **o** desvío vs. mismo mes histórico | advertencia |
 | V09 | Montos inconsistentes | `total` ≠ suma de conceptos (±tolerancia) | advertencia |
 | V10 | Período superpuesto | solapamiento con otro registro del mismo servicio | error |
+| V11 | Confianza OCR baja | `confianza_global < 70` | advertencia |
+| V12 | Campo crítico no detectado | Falta lectura, fecha o monto | error |
+| V13 | Valor OCR inconsistente | Valor extraído no pasa V01–V10 al compararse | advertencia |
+| V14 | Documento duplicado | Hash del archivo ya existe | advertencia |
 
 **Excepciones legítimas:** cambio de medidor, reinicio, ajuste tarifario. Se registran vía `tipo_lectura` + `observaciones` + `historial_cambios`.
+
+**Regla de oro OCR:** ningún dato extraído se guarda en `registros` sin confirmación humana en la primera versión.
+
+Flujo OCR:
+Subir imagen/PDF → OCR → Revisión humana → Confirmar → registros
+
+text
 
 ---
 
 ## 6. Motor de métricas
 
-### Indicadores
+### 6.1 Indicadores
+
 | Indicador | Fórmula |
 |---|---|
 | Consumo total | Σ consumo del período |
@@ -198,14 +262,16 @@ Se ejecutan automáticamente al crear o modificar un registro. **Nunca bloquean 
 | Desviación estándar | σ poblacional de la serie |
 | Puntaje Z | (x − μ) / σ |
 
-### Detección de atípicos (3 métodos, todos activos)
+### 6.2 Detección de atípicos (3 métodos, todos activos)
+
 1. **Z-score:** alerta si \|Z\| > umbral (default 2.5, configurable).
 2. **IQR:** atípico si `x < Q1 − 1.5·IQR` o `x > Q3 + 1.5·IQR`.
 3. **Comparación estacional:** vs. mismo mes de años anteriores.
 
 **Regla:** cada alerta debe indicar **qué método la originó**.
 
-### Métricas consolidadas
+### 6.3 Métricas consolidadas
+
 - Totales por tipo de servicio (agua / electricidad).
 - Promedios por establecimiento y por servicio.
 - Ranking de mayor variación mensual.
@@ -214,9 +280,11 @@ Se ejecutan automáticamente al crear o modificar un registro. **Nunca bloquean 
 - Conteo de registros con error / advertencia / pendientes.
 - Indicadores normalizados (m³/alumno, kWh/m²) **si hay datos**.
 
+> El OCR no afecta métricas. Sí afecta la calidad del dato de entrada, por eso su salida debe pasar por validaciones V01–V14.
+
 ---
 
-## 7. Interfaz (módulos)
+## 7. Módulos de interfaz
 
 | Módulo | Función |
 |---|---|
@@ -224,6 +292,7 @@ Se ejecutan automáticamente al crear o modificar un registro. **Nunca bloquean 
 | Establecimientos | CRUD |
 | Servicios | CRUD, medidores por establecimiento |
 | Boletas / Registros | Alta, edición, consulta, adjuntos |
+| OCR de boletas | Subir imagen/PDF, procesar, revisar campos detectados, corregir y confirmar |
 | Validaciones | Bandeja de errores/advertencias |
 | Métricas | Análisis por servicio, establecimiento y período |
 | Alertas | Historial y gestión |
@@ -231,6 +300,17 @@ Se ejecutan automáticamente al crear o modificar un registro. **Nunca bloquean 
 | Configuración | Parámetros, umbrales, respaldos |
 
 **Regla de UI:** los filtros del panel afectan **simultáneamente** a indicadores, gráficos y tablas.
+
+### 7.1 Vista OCR (nueva pantalla)
+
+1. **Zona de carga:** arrastrar imagen (JPG, PNG) o PDF.
+2. **Preview del documento** a la izquierda.
+3. **Panel de campos detectados** a la derecha, con:
+   - Valor extraído.
+   - Confianza (barra de color: verde >85, amarillo 70–85, rojo <70).
+   - Botón "editar".
+4. **Selección de plantilla** (proveedor) antes de procesar, si existe.
+5. **Botón "Confirmar y crear registro"** (solo habilitado si no hay errores críticos).
 
 ---
 
@@ -248,74 +328,130 @@ Se ejecutan automáticamente al crear o modificar un registro. **Nunca bloquean 
 | POST | `/api/informes/excel` | Exportar Excel |
 | POST | `/api/informes/pdf` | Exportar PDF |
 | POST | `/api/respaldo` | Generar respaldo |
+| POST | `/api/ocr/procesar` | Sube archivo y lanza OCR (devuelve `ocr_proceso_id`) |
+| GET | `/api/ocr/procesos/:id` | Estado y resultado del proceso |
+| PUT | `/api/ocr/campos/:id` | Corregir un campo detectado |
+| POST | `/api/ocr/procesos/:id/confirmar` | Convierte OCR en registro definitivo |
+| GET/POST/PUT/DELETE | `/api/ocr/plantillas` | CRUD de plantillas por proveedor |
+| POST | `/api/ocr/reprocesar/:id` | Reintentar con otra plantilla o modo |
 
 Formato de respuesta: JSON. Errores con `{ error: { codigo, mensaje } }`.
 
 ---
 
-## 9. Estructura de carpetas (canónica)
-
-```
+## 9. Estructura de carpetas
 control-consumos/
 ├── package.json
 ├── server.js
-├── ESPECIFICACION.md          ← este archivo
+├── ESPECIFICACION.md
 ├── config/
-│   └── app.config.js
+│ └── app.config.js
 ├── src/
-│   ├── database/
-│   │   ├── connection.js
-│   │   ├── migrations/
-│   │   └── repositories/
-│   │       ├── establecimientos.js
-│   │       ├── servicios.js
-│   │       ├── registros.js
-│   │       └── parametros.js
-│   ├── services/
-│   │   ├── consumo.service.js
-│   │   ├── validacion.service.js
-│   │   ├── estadistica.service.js
-│   │   ├── alertas.service.js
-│   │   ├── informes.service.js
-│   │   └── respaldo.service.js
-│   ├── routes/
-│   │   ├── establecimientos.routes.js
-│   │   ├── servicios.routes.js
-│   │   ├── registros.routes.js
-│   │   ├── metricas.routes.js
-│   │   └── informes.routes.js
-│   └── utils/
-│       ├── fechas.js
-│       ├── calculos.js
-│       └── formatos.js
+│ ├── database/
+│ │ ├── connection.js
+│ │ ├── migrations/
+│ │ └── repositories/
+│ │ ├── establecimientos.js
+│ │ ├── servicios.js
+│ │ ├── registros.js
+│ │ └── parametros.js
+│ ├── services/
+│ │ ├── consumo.service.js
+│ │ ├── validacion.service.js
+│ │ ├── estadistica.service.js
+│ │ ├── alertas.service.js
+│ │ ├── informes.service.js
+│ │ ├── respaldo.service.js
+│ │ ├── ocr.service.js ← orquestador OCR
+│ │ └── ocr/
+│ │ ├── tesseract.adapter.js ← wrapper Tesseract.js
+│ │ ├── pdf.adapter.js ← extracción de PDFs con texto
+│ │ ├── preprocess.js ← Sharp: rotar, escalar, binarizar
+│ │ ├── parser.js ← regex + plantillas → campos
+│ │ └── plantillas/
+│ │ ├── agua-default.json
+│ │ └── electricidad-default.json
+│ ├── routes/
+│ │ ├── establecimientos.routes.js
+│ │ ├── servicios.routes.js
+│ │ ├── registros.routes.js
+│ │ ├── ocr.routes.js
+│ │ ├── metricas.routes.js
+│ │ └── informes.routes.js
+│ └── utils/
+│ ├── fechas.js
+│ ├── calculos.js
+│ └── formatos.js
 ├── public/
-│   ├── index.html
-│   ├── css/
-│   ├── js/
-│   │   ├── app.js
-│   │   ├── router.js
-│   │   ├── api.js
-│   │   ├── components/
-│   │   └── views/
-│   └── assets/
+│ ├── index.html
+│ ├── css/
+│ │ ├── main.css
+│ │ └── components.css
+│ ├── js/
+│ │ ├── app.js
+│ │ ├── router.js
+│ │ ├── api.js
+│ │ ├── components/
+│ │ └── views/
+│ │ ├── dashboard.js
+│ │ ├── establecimientos.js
+│ │ ├── servicios.js
+│ │ ├── registros.js
+│ │ ├── ocr.js
+│ │ ├── analisis.js
+│ │ ├── alertas.js
+│ │ └── informes.js
+│ └── assets/
 └── data/
-    ├── consumos.sqlite
-    ├── documentos/
-    └── respaldos/
-```
+├── consumos.sqlite
+├── documentos/
+├── respaldos/
+└── ocr/
+├── tessdata/ ← modelos de idioma (spa, eng)
+└── temporales/ ← imágenes en proceso
+
+text
 
 ---
 
 ## 10. Flujo de ejecución
+
+### 10.1 General
 
 1. `npm install`
 2. `npm start`
 3. Abrir `http://localhost:3000`
 4. La base de datos se crea/migra automáticamente al iniciar si no existe.
 
+### 10.2 Flujo OCR
+Usuario sube boleta (imagen o PDF).
+
+Se guarda en /data/documentos con hash.
+
+Se crea ocr_proceso (estado: pendiente).
+
+Preprocesamiento (Sharp): corrección de orientación, escala, contraste.
+
+Si es PDF con texto → pdf.adapter extrae directo.
+Si es PDF escaneado o imagen → Tesseract.js.
+
+parser.js aplica regex + plantilla del proveedor.
+
+Se calcula confianza por campo.
+
+Se ejecutan validaciones V11–V14.
+
+Usuario revisa en pantalla OCR, corrige lo necesario.
+
+Al confirmar → se crea registro + detalle_boleta.
+
+Se ejecutan validaciones V01–V10 sobre el registro confirmado.
+
+text
+
 ---
 
-## 11. Hoja de ruta (etapas)
+## 11. Hoja de ruta
 
 ### Etapa 1 — Base de datos y registros
 - [ ] Esquema SQLite + migraciones
@@ -342,10 +478,22 @@ control-consumos/
 - [ ] Importación masiva desde Excel
 - [ ] Alertas automáticas y resúmenes
 
+### Etapa 4.5 — OCR de boletas
+- [ ] Integrar Tesseract.js con modelos locales (spa + eng)
+- [ ] Integrar pdf-parse para PDFs con texto
+- [ ] Preprocesamiento con Sharp (rotación, escala, binarizado)
+- [ ] Parser base con regex para campos comunes
+- [ ] Pantalla de revisión OCR con confianza por campo
+- [ ] CRUD de plantillas por proveedor
+- [ ] Confirmación humana obligatoria antes de crear registro
+- [ ] Validaciones V11–V14
+- [ ] Reintento con otra plantilla
+- [ ] Historial de procesos OCR
+
 ### Etapa 5 — Futuro (fuera del alcance inicial)
-- [ ] OCR de boletas
 - [ ] Normalización por matrícula/superficie
 - [ ] Modo red local con autenticación
+- [ ] Aprendizaje de plantillas a partir de correcciones humanas
 
 ---
 
@@ -358,6 +506,7 @@ control-consumos/
 | 3 | Parámetros normales | **Configurables por servicio**, con método `fijo`, `historico` o `manual`. |
 | 4 | Informes | **Excel, CSV y PDF** (los tres). |
 | 5 | Modo de uso | **Un solo computador** inicialmente. Red local queda como Etapa 5. |
+| 6 | OCR | **Tesseract.js local + pdf-parse para PDFs con texto. Confirmación humana obligatoria en v1.** |
 
 > Estas decisiones pueden revisarse, pero todo cambio debe reflejarse en este documento **antes** de implementarse.
 
@@ -377,14 +526,71 @@ control-consumos/
 
 - [ ] Se pueden registrar N establecimientos con M servicios cada uno.
 - [ ] Cada servicio mantiene su propio historial de lecturas.
-- [ ] Las validaciones V01–V10 se ejecutan automáticamente.
+- [ ] Las validaciones V01–V14 se ejecutan automáticamente.
 - [ ] El panel muestra totales y evolución mensual filtrables.
 - [ ] Se detectan valores atípicos por los 3 métodos.
 - [ ] Se exportan informes a Excel, CSV y PDF.
+- [ ] Se puede subir una imagen o PDF de boleta y obtener campos extraídos.
+- [ ] Cada campo OCR muestra su confianza individual.
+- [ ] El usuario puede corregir cualquier campo OCR antes de confirmar.
+- [ ] Ningún dato OCR se guarda en `registros` sin confirmación humana.
+- [ ] Existen plantillas por proveedor editables.
+- [ ] El OCR funciona **sin conexión a Internet**.
+- [ ] Se registra historial de cada proceso OCR.
 - [ ] La base de datos se respalda con un clic.
 - [ ] Todo funciona sin conexión a Internet.
 
 ---
 
+## 15. Consideraciones técnicas OCR
+
+### 15.1 Formatos soportados
+
+- **Imágenes:** JPG, PNG, TIFF (entrada directa a Tesseract).
+- **PDF con texto:** extracción directa (más rápido y preciso).
+- **PDF escaneado:** se convierte a imagen por página y se procesa con Tesseract.
+
+### 15.2 Idiomas
+
+- Modelos `spa.traineddata` y `eng.traineddata` incluidos en `/data/ocr/tessdata`.
+- Configuración por defecto: `spa+eng` (las boletas chilenas suelen tener ambos).
+
+### 15.3 Preprocesamiento (mejora notable de precisión)
+
+1. Corregir orientación (EXIF + detección automática).
+2. Escalar a 300 DPI si es menor.
+3. Convertir a escala de grises.
+4. Binarizar con umbral adaptativo.
+5. Eliminar ruido (opcional, modo conservador).
+
+### 15.4 Estrategia de extracción de campos
+
+- **Fechas:** regex de formatos chilenos (`dd/mm/yyyy`, `dd-mm-yyyy`, `dd de mes de yyyy`).
+- **Lecturas:** buscar etiquetas ("Lectura actual", "Lectura anterior") y capturar número cercano.
+- **Montos:** patrón `$` + número con separador de miles.
+- **Folio:** etiquetas ("Folio", "N° boleta", "Nº documento").
+- **Período:** combinación de fecha inicio + fecha fin.
+
+### 15.5 Umbrales de confianza (configurables)
+
+- `> 85`: campo aceptado automáticamente (aún requiere confirmación global).
+- `70–85`: resaltado en amarillo, revisar.
+- `< 70`: resaltado en rojo, edición obligatoria.
+
+### 15.6 Manejo de errores
+
+- Si Tesseract falla → `ocr_proceso.estado = 'error'`, se guarda log.
+- Si no se detecta ningún campo crítico → se ofrece entrada manual.
+- Nunca se pierde el archivo original.
+
+### 15.7 Rendimiento
+
+- Procesamiento **asíncrono**: la UI muestra progreso, no bloquea.
+- Boleta típica (1 página): 3–8 segundos en CPU moderna.
+- Límite de tamaño de archivo: 20 MB configurable.
+
+---
+
 **Fin del documento.**
+
 Cualquier funcionalidad no descrita aquí **no forma parte del alcance** hasta que se agregue explícitamente.
